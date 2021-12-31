@@ -1,13 +1,19 @@
 use std::io::prelude::*;
 use std::net::TcpStream;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::env;
 
 fn main() -> std::io::Result<()> {
 	let mut stream = TcpStream::connect("127.0.0.1:5000")?;
-	let my_identifier = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+	let mut identifier: String = String::from("unnamed");
+	for argument in env::args() {
+		identifier = argument;
+	}
 
 	loop {
-		let message = format!("{:?}: hello", my_identifier);
+		let when = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+		let message = format!("{:}@{:?}: hello", identifier, when);
+
 		let written = stream.write(message.as_bytes())?;
 		println!("stream.write({})", written);
 

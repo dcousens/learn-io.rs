@@ -18,6 +18,7 @@ fn main() -> std::io::Result<()> {
 
 	let mut clients = Vec::new();
 	loop {
+		// accept newcomers
 		loop {
 			match listener.accept() {
 				Ok((stream, address)) => {
@@ -36,9 +37,10 @@ fn main() -> std::io::Result<()> {
 			}
 		}
 
-		let mut buffer = [0; 64]; // only receives maximum of 64 bytes at once
+		// an interim buffer, only receives maximum of 64 bytes at once
+		let mut buffer = [0; 64]; 
 
-		// receive
+		// receive messages
 		let mut outgoing = Vec::new();
 		let mut i = 0;
 		for client in &mut clients {
@@ -66,7 +68,7 @@ fn main() -> std::io::Result<()> {
 			}
 		}
 
-		// broadcast
+		// broadcast messages
 		let mut i = 0;
 		for client in &mut clients {
 			i = i + 1;

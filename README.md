@@ -6,6 +6,7 @@ It's a learning exercise.
 
 ## Things to do
 - `std::thread` instead of `set_nonblocking`,  using [`std::sync`](https://doc.rust-lang.org/std/sync/index.html)
+- [use `metal`](https://github.com/tokio-rs/mio)
 
 
 ## How to test

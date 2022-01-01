@@ -12,18 +12,18 @@ It's a learning exercise.
 ## How to test
 In a terminal
 ``` bash
-$ ./server
+> ./server
 ```
 
 Then, in two other terminals
 ``` bash
-$ ./client alice
-$ ./client bob
+> ./client alice
+> ./client bob
 ```
 
 Type into either terminals to send messages, hit ENTER (new line) to spin the `stream.read` loop
 ``` bash
-$ ./client alice
+> ./client alice
 hello
 stdin.read(bytes: 7): hello
 
@@ -34,7 +34,7 @@ stream.read(bytes: 19): bob@1641002882: hi
 
 (and in the other terminal)
 ``` bash
-$ ./client bob
+> ./client bob
 
 stream.read(bytes: 25): alice@1641002874: hello
 

@@ -37,8 +37,8 @@ fn main() -> std::io::Result<()> {
 			}
 		}
 
-		// an interim buffer, only receives maximum of 64 bytes at once
-		let mut buffer = [0; 64]; 
+		// an interim buffer
+		let mut buffer = [0; 1024];
 
 		// receive messages
 		let mut outgoing = Vec::new();
@@ -55,8 +55,8 @@ fn main() -> std::io::Result<()> {
 						continue;
 					}
 
-					let data = &buffer[0..bytes];
-					println!("stream.read({}): {}", bytes, std::str::from_utf8(&data).unwrap());
+					let data = buffer.get(0..bytes).unwrap();
+					println!("stream.read(from: {}, bytes: {}): {}", i, bytes, std::str::from_utf8(&data).unwrap());
 
 					outgoing.push(Message{
 						from: i,
@@ -87,7 +87,7 @@ fn main() -> std::io::Result<()> {
 							continue;
 						}
 
-						println!("stream.write({})", bytes);
+						println!("stream.write(from: {}, to: {}, bytes: {})", message.from, i, bytes);
 					}
 					Err(ref e) if e.kind() == WouldBlock => {} // TODO: maybe blocking for write?
 					Err(e) => { println!("stream.write(err): {:?}", e); }

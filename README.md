@@ -1,5 +1,5 @@
 # echo.rs demo
-A `std` library only TCP server/client demonstration in Rust.
+A `std` library demonstration of IO patterns in Rust.
 
 WARNING: This is a work in progress! It is not idiomatic rust.
 It's a learning exercise.
@@ -43,3 +43,5 @@ stdin.read(bytes: 3): hi
 
 stream.write(19)
 ```
+
+## LICENSE [MIT](LICENSE)

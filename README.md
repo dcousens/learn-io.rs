@@ -1,4 +1,4 @@
-# echo.rs demo
+# learn-io.rs
 A `std` library demonstration of IO patterns in Rust.
 
 WARNING: This is a work in progress! It is not idiomatic rust.

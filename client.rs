@@ -15,7 +15,7 @@ fn main() -> std::io::Result<()> {
 	}
 
 	// an interim buffer
-	let mut buffer = [0; 1024];
+	let mut buffer = vec![0; 1024]; // use vec to prevent stack overflow
 
 	loop {
 		let read = stream.read(&mut buffer[..]);

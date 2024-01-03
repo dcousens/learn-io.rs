@@ -17,11 +17,9 @@ fn main() -> std::io::Result<()> {
 
 		if read.is_empty() { return Ok(()) }
 
-		loop {
-			match stdout.write_all(read) {
-				Ok (_) => break,
-				Err (e) => { return Err(e) }
-			};
-		}
+		match stdout.write_all(read) {
+			Ok (_) => {},
+			Err (e) => { return Err(e) }
+		};
 	}
 }

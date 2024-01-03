@@ -19,7 +19,7 @@ fn main() -> std::io::Result<()> {
 
 	loop {
 		let read = match stream.read(&mut buffer[..]) {
-			Ok (bytes) => bytes,
+			Ok (bytes) => buffer.get(0..bytes).unwrap(),
 			Err (e) if e.kind() == WouldBlock => { continue }
 			Err (e) => {
 				eprintln!("stream.read(err): {:?}", e);
@@ -27,10 +27,8 @@ fn main() -> std::io::Result<()> {
 			}
 		};
 
-		if read == 0 { break } // dropped
-
-		let data = buffer.get(0..read).unwrap();
-		println!("stream.read(bytes: {}): {}", read, std::str::from_utf8(&data).unwrap());
+		if read.is_empty() { break } // dropped
+		println!("stream.read(bytes: {}): {}", read.len(), std::str::from_utf8(&read).unwrap());
 
 		let mut string = String::new();
 		let length = match io::stdin().read_line(&mut string) {

@@ -44,7 +44,7 @@ fn main() -> std::io::Result<()> {
 			i = i + 1;
 
 			let read = match client.stream.read(&mut buffer[..]) {
-				Ok (bytes) => bytes,
+				Ok (bytes) => buffer.get(0..bytes).unwrap(),
 				Err (e) if e.kind() == WouldBlock => { continue }
 				Err (e) => {
 					eprintln!("stream.read(err): {:?}", e);
@@ -52,18 +52,17 @@ fn main() -> std::io::Result<()> {
 				}
 			};
 
-			if read == 0 { // dropped?
+			if read.is_empty() { // dropped?
 				client.dropped = true;
 				println!("stream.read(dropped)");
 				continue;
 			}
 
-			let data = buffer.get(0..read).unwrap();
-			println!("stream.read(from: {}, bytes: {}): {}", i, read, std::str::from_utf8(&data).unwrap());
+			println!("stream.read(from: {}, bytes: {}): {}", i, read.len(), std::str::from_utf8(&read).unwrap());
 
 			outgoing.push(Message{
 				from: i,
-				data: data.to_vec(),
+				data: read.to_vec(),
 			});
 		}
 

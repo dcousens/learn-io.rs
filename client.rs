@@ -18,33 +18,33 @@ fn main() -> std::io::Result<()> {
 	let mut buffer = vec![0; 1024]; // use vec to prevent stack overflow
 
 	loop {
-		let read = stream.read(&mut buffer[..]);
-		match read {
-			Ok(bytes) => {
-				if bytes == 0 { break } // dropped
-
-				let data = buffer.get(0..bytes).unwrap();
-				println!("stream.read(bytes: {}): {}", bytes, std::str::from_utf8(&data).unwrap());
+		let read = match stream.read(&mut buffer[..]) {
+			Ok (bytes) => bytes,
+			Err (e) if e.kind() == WouldBlock => { continue }
+			Err (e) => {
+				eprintln!("stream.read(err): {:?}", e);
+				continue
 			}
-			Err(ref e) if e.kind() == WouldBlock => {}
-			Err(e) => { println!("stream.read(err): {:?}", e); }
-		}
+		};
+
+		if read == 0 { break } // dropped
+
+		let data = buffer.get(0..read).unwrap();
+		println!("stream.read(bytes: {}): {}", read, std::str::from_utf8(&data).unwrap());
 
 		let mut string = String::new();
-		let result = io::stdin().read_line(&mut string);
-		match result {
-			Ok(length) => {
-				if length <= 1 { continue } // empty/new line to loop
+		let length = match io::stdin().read_line(&mut string) {
+			Ok (length) => length,
+			Err (e) => { return Err(e) }
+		};
 
-				println!("stdin.read(bytes: {}): {}", length, string);
-				let when = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-				let message = format!("{:}@{:?}: {:}", identifier, when, string);
+		if length <= 1 { continue } // empty/new line to loop
 
-				let written = stream.write(message.as_bytes())?;
-				println!("stream.write({})", written);
-			}
-			Err(e) => { println!("stdin.read(err): {:?}", e); }
-		}
+		println!("stdin.read(bytes: {}): {}", length, string);
+		let when = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+		let message = format!("{:}@{:?}: {:}", identifier, when, string);
+		let written = stream.write(message.as_bytes())?;
+		println!("stream.write({})", written);
 	}
 
 	Ok(())

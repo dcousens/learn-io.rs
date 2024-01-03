@@ -20,25 +20,22 @@ fn main() -> std::io::Result<()> {
 	loop {
 		// accept newcomers
 		loop {
-			match listener.accept() {
-				Ok((stream, address)) => {
-					println!("listen: {:?}", address);
-					stream.set_nonblocking(true)?;
-					clients.push(Client{
-						stream: stream,
-						dropped: false
-					});
-				}
-				Err(ref e) if e.kind() == WouldBlock => { break; }
-				Err(e) => {
-					println!("listen(err): {:?}", e);
-					return Ok(());
-				}
-			}
+			let (stream, address) = match listener.accept() {
+				Ok (result) => result,
+				Err (e) if e.kind() == WouldBlock => { break },
+				Err (e) => { return Err(e) }
+			};
+
+			println!("listen: {:?}", address);
+			stream.set_nonblocking(true)?;
+			clients.push(Client{
+				stream: stream,
+				dropped: false
+			});
 		}
 
 		// an interim buffer
-		let mut buffer = [0; 1024];
+		let mut buffer = vec![0; 1024]; // use vec to prevent stack overflow
 
 		// receive messages
 		let mut outgoing = Vec::new();
@@ -46,26 +43,28 @@ fn main() -> std::io::Result<()> {
 		for client in &mut clients {
 			i = i + 1;
 
-			let read = client.stream.read(&mut buffer[..]);
-			match read {
-				Ok(bytes) => {
-					if bytes == 0 { // dropped?
-						client.dropped = true;
-						println!("stream.read(dropped)");
-						continue;
-					}
-
-					let data = buffer.get(0..bytes).unwrap();
-					println!("stream.read(from: {}, bytes: {}): {}", i, bytes, std::str::from_utf8(&data).unwrap());
-
-					outgoing.push(Message{
-						from: i,
-						data: data.to_vec(),
-					});
+			let read = match client.stream.read(&mut buffer[..]) {
+				Ok (bytes) => bytes,
+				Err (e) if e.kind() == WouldBlock => { continue }
+				Err (e) => {
+					eprintln!("stream.read(err): {:?}", e);
+					continue
 				}
-				Err(ref e) if e.kind() == WouldBlock => {}
-				Err(e) => { println!("stream.read(err): {:?}", e); }
+			};
+
+			if read == 0 { // dropped?
+				client.dropped = true;
+				println!("stream.read(dropped)");
+				continue;
 			}
+
+			let data = buffer.get(0..read).unwrap();
+			println!("stream.read(from: {}, bytes: {}): {}", i, read, std::str::from_utf8(&data).unwrap());
+
+			outgoing.push(Message{
+				from: i,
+				data: data.to_vec(),
+			});
 		}
 
 		// broadcast messages
@@ -74,24 +73,25 @@ fn main() -> std::io::Result<()> {
 			i = i + 1;
 
 			for message in &outgoing {
-				if message.from == i {
-					continue; // skip messages from ourselves
-				}
+				// skip messages from ourselves
+				if message.from == i { continue }
 
-				let written = client.stream.write(&message.data[..]);
-				match written {
-					Ok(bytes) => {
-						if bytes == 0 { // dropped?
-							client.dropped = true;
-							println!("stream.write(dropped)");
-							continue;
-						}
-
-						println!("stream.write(from: {}, to: {}, bytes: {})", message.from, i, bytes);
+				let written = match client.stream.write(&message.data[..]) {
+					Ok(bytes) => bytes,
+					Err (e) if e.kind() == WouldBlock => { continue }
+					Err (e) => {
+						eprintln!("stream.write(err): {:?}", e);
+						continue
 					}
-					Err(ref e) if e.kind() == WouldBlock => {} // TODO: maybe blocking for write?
-					Err(e) => { println!("stream.write(err): {:?}", e); }
+				};
+
+				if written == 0 { // dropped?
+					client.dropped = true;
+					println!("stream.write(dropped)");
+					continue;
 				}
+
+				println!("stream.write(from: {}, to: {}, bytes: {})", message.from, i, written);
 			}
 		}
 
